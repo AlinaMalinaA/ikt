@@ -18,7 +18,6 @@ from django.contrib import admin
 admin.autodiscover()
 
 urlpatterns = [
-    url(r'', include('blog.urls')),
+    url(r'', include('ikt_schedule.urls')),
     url(r'^admin/', admin.site.urls),
-    url(r'^polls/', include('blog.urls'))
 ]

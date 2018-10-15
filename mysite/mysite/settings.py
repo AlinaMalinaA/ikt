@@ -38,7 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     # 'django.contrib.flatpages',
     'django.contrib.staticfiles',
-    'blog',
+    'ikt_schedule',
 ]
 
 MIDDLEWARE_CLASSES = [
