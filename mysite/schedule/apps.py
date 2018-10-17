@@ -3,5 +3,5 @@ from __future__ import unicode_literals
 from django.apps import AppConfig
 
 
-class IktSceduleConfig(AppConfig):
-    name = 'ikt_schedule'
+class ScheduleConfig(AppConfig):
+    name = 'schedule'
