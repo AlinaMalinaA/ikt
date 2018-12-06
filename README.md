@@ -1,2 +1,0 @@
-# ikt
-Ikt homework
