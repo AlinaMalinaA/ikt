@@ -64,6 +64,7 @@ def make_data_array():
     if len(names_list[0]) > 0:
         for raw_counter, raw in enumerate(names_list):
             for name_counter, name in enumerate(raw):
+                name = name.strip(" ")
                 name_counter += 1
                 try:
                     names_and_places_array[name].append(name_counter)
@@ -90,27 +91,26 @@ def write_result(result):
         file.write(first_part+result+second_part)
 
 
-def make_result_string(names_and_places_array, dates_array):
+def make_result_string(names_and_places_array, dates_array, names_and_groups):
     names_array = list(names_and_places_array.keys())
     names_array.sort()
-    result = "var names_raw = ['place'"
-    for key in names_array:
-        result += ", '{}'".format(crop(key))
+    result = "var names_groups = "
+    result += str(names_and_groups)
 
-    result += "]\n var array = [names_raw \n"
+    result += "\nvar dates = ["
 
-    for ind, date in enumerate(dates_array):
-        result += ", ['{}'".format(date.strftime("%d.%m"))
-        for name in names_array:
-            place = names_and_places_array[name][ind]
-            result += ", " + str(place)
-        result += "] \n"
-    result += "];"
+    for date in dates_array:
+        result += "'{}',".format(date.strftime("%d.%m"))
 
+    result = result.strip(",")
+    result += "]\nvar names_places = "
+    result += str(names_and_places_array) + "\n"
+    # print(result)
     return result
 
 
 def get_new_data_from_site(old_array):
+    names__and_groups = []
     url = get_url_to_parse()
     r = requests.get(url)
     text = r.text.encode("ISO-8859-1")   # text - bytes
@@ -123,6 +123,7 @@ def get_new_data_from_site(old_array):
         it = x.find_all('td')
         if len(it) > 3:
             name_class[it[1].text] = re.findall(r'\d+', it[3].text)[0]
+            names__and_groups = name_class
             position_name[int(it[0].text)] = it[1].text
 
     new_data = []
@@ -141,15 +142,21 @@ def get_new_data_from_site(old_array):
     else:
         is_there_somethig_new = True
 
+    for name in names__and_groups:
+        temp = name.strip(" ")
+        if temp != name:
+            names__and_groups[temp] = names__and_groups[name]
+            del names__and_groups[name]
+
+
     if is_there_somethig_new:
         new_data.reverse()
-        return new_data
+        return new_data, names__and_groups
     else:
-        return None
+        return None, names__and_groups
 
 
 def read_old_data_from_file():
-    old_array = []
     file = get_names_file()
     with open(file, encoding="utf-8") as f:
         old_array = [row.strip() for row in f]

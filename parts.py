@@ -20,7 +20,7 @@ def get_second_part():
     second = "\n"
     start_write = False
     for row in rows:
-        if 'var isSelected = false' in row:
+        if 'show_only = [];' in row:
             start_write = True
         if start_write:
             second += row
