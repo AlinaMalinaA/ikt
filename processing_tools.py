@@ -5,10 +5,11 @@ from parts import get_first_part, get_second_part, get_rating_file
 import requests
 from bs4 import BeautifulSoup
 import datetime
+import re
 
 
 def get_names_file():
-    return 'C:\\Users\\Alena\\Documents\\test_project\\new_try\\names.html'
+    return 'F:\\Users\\Alena\\Documents\\New_folder\\ikt\\names.html'
 
 
 def get_url_to_parse():
@@ -27,7 +28,7 @@ def is_it_date(date):
 
 def crop(name):
     words = name.split(" ")
-    return words[0]
+    return words[0] + " " + words[1][0] + "."
 
 
 def get_dates_and_names_arrays(array):
@@ -37,77 +38,74 @@ def get_dates_and_names_arrays(array):
     for name_or_date in array:
         date = is_it_date(name_or_date)
         if not date:
-            temp_row_names.append(name_or_date)
+            if name_or_date != "":
+                temp_row_names.append(name_or_date)
         else:
             if len(temp_row_names) > 0:
                 names_list.append(temp_row_names)
                 temp_row_names = []
             dates_array.append(date)
+    if len(temp_row_names) > 0:
+        names_list.append(temp_row_names)
     return dates_array, names_list
 
 
 def make_data_array():
     array = read_old_data_from_file()
 
-    dates_array, names_list = get_dates_and_names_arrays(array)
+    dates_array, names_list = get_dates_and_names_arrays(array)  # just list of dates and names from file
+    temp = []
+    for raw in names_list:
+        temp += raw
+    uniq_names = list(dict.fromkeys(temp))
 
-    names_and_places_array = {}
-    names_array = []
-
+    names_and_places_array = {}   # list with places of every person per name
     # creates columns in result array
-    for counter, name in enumerate(names_list[0]):
-        if name not in names_array:
-            names_array.append(name)
-        names_and_places_array[name] = []
+    if len(names_list[0]) > 0:
+        for raw_counter, raw in enumerate(names_list):
+            for name_counter, name in enumerate(raw):
+                name_counter += 1
+                try:
+                    names_and_places_array[name].append(name_counter)
+                except KeyError:
+                    names_and_places_array[name] = []
+                    names_and_places_array[name].append(name_counter)
 
-    # fill person places in result array
-    for number, row in enumerate(names_list):
-        keys = names_and_places_array.keys()
-        for counter,  name in enumerate(row):
-            if name in names_and_places_array:
-                names_and_places_array[name].append(counter+1)
-                keys.remove(name)
-            else:
-                names_and_places_array[name] = [counter]
-        for k in keys:
-            names_and_places_array[k].append(52)
+            for name in uniq_names:
+                try:
+                    if len(names_and_places_array[name]) < raw_counter + 1:
+                        names_and_places_array[name].append(52)
+                except KeyError:
+                    names_and_places_array[name] = []
+                    names_and_places_array[name].append(52)
 
-        for name in row:
-            if len(names_and_places_array[name]) < number:
-                names_and_places_array[name].append(51)
-
-    return names_and_places_array, dates_array, names_array, names_list
+    return names_and_places_array, dates_array
 
 
 def write_result(result):
     first_part = get_first_part()
     second_part = get_second_part()
     file = get_rating_file()
-    with open(file, "w") as file:
+    with open(file, "w", encoding="utf-8") as file:
         file.write(first_part+result+second_part)
 
 
-def make_result_string(result_array, dates_array, names_array, control_names_list):
-    result = "['place' "
+def make_result_string(names_and_places_array, dates_array):
+    names_array = list(names_and_places_array.keys())
     names_array.sort()
-    keys = result_array.keys()
+    result = "var names_raw = ['place'"
     for key in names_array:
-        result += ",'{}'".format(crop(key))
+        result += ", '{}'".format(crop(key))
 
-    result += "]"
+    result += "]\n var array = [names_raw \n"
 
-    for counter, row in enumerate(control_names_list):
-        line = ",["
-        line += "'{0}'".format(dates_array[counter].strftime("%d.%m.%Y"))
+    for ind, date in enumerate(dates_array):
+        result += ", ['{}'".format(date.strftime("%d.%m"))
         for name in names_array:
-            for key in keys:
-                if key == name:
-                    try:
-                        line += ",{}".format(str(result_array[key][counter]))
-                    except IndexError:
-                        line += ",51"
-        line += "]"
-        result += line
+            place = names_and_places_array[name][ind]
+            result += ", " + str(place)
+        result += "] \n"
+    result += "];"
 
     return result
 
@@ -115,25 +113,35 @@ def make_result_string(result_array, dates_array, names_array, control_names_lis
 def get_new_data_from_site(old_array):
     url = get_url_to_parse()
     r = requests.get(url)
-    text = r.text.encode('ISO-8859-1')
+    text = r.text.encode("ISO-8859-1")   # text - bytes
     soup = BeautifulSoup(text, "lxml")
     film_list = soup.find('table', {'class': 'table-rating'})
-    items = film_list.find_all('td')
+    name_class = {}
+    position_name = {}
+    raws = film_list.find_all('tr')
+    for x in raws:
+        it = x.find_all('td')
+        if len(it) > 3:
+            name_class[it[1].text] = re.findall(r'\d+', it[3].text)[0]
+            position_name[int(it[0].text)] = it[1].text
+
     new_data = []
-    is_the_same = False
-    for counter, item in enumerate(items):
-        if "344" not in item.text.encode('utf-8'):
-            if 0 < counter % 4 < 2:
-                new_data.append(item.text.encode('utf-8'))
+    is_there_somethig_new = False
+    for number in position_name:
+        name = position_name[number]
+        new_data.append(str(name))
+
     new_data.reverse()
+
     lenght = len(old_array) - 1
-    if lenght > 5:
+    if lenght > 6:
         for counter, el in enumerate(new_data):
             if el.strip() != old_array[lenght - counter].strip():
-                is_the_same = True
+                is_there_somethig_new = True
     else:
-        is_the_same = True
-    if is_the_same:
+        is_there_somethig_new = True
+
+    if is_there_somethig_new:
         new_data.reverse()
         return new_data
     else:
@@ -143,17 +151,14 @@ def get_new_data_from_site(old_array):
 def read_old_data_from_file():
     old_array = []
     file = get_names_file()
-    try:
-        with open(file) as f:
-            old_array = [row.strip() for row in f]
-    except:
-        print "Can't open file", file
+    with open(file, encoding="utf-8") as f:
+        old_array = [row.strip() for row in f]
     return old_array
 
 
 def write_new_data_in_file(new_data):
     file = get_names_file()
-    with open(file, 'a') as output_file:
+    with open(file, 'a', encoding="utf8") as output_file:
         output_file.write(str(datetime.datetime.today()) + "\n")
         for el in new_data:
             output_file.write(el + "\n")

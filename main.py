@@ -6,13 +6,12 @@ from shutil import copyfile
 
 old_data = read_old_data_from_file()
 new_data = get_new_data_from_site(old_data)
+print("Пишем?", bool(new_data))
 if new_data:
     write_new_data_in_file(new_data)
 
-    result_array, dates_array, names_array, control_names_list = make_data_array()
-    result = make_result_string(result_array, dates_array, names_array, control_names_list)
-    write_result(result)
+names_and_places_array, dates_array = make_data_array()
+result = make_result_string(names_and_places_array, dates_array)
+write_result(result)
 
 
-copyfile("C:\\Users\\Alena\\Documents\\New folder\\index.html",
-         "C:\\Users\\Alena\\Documents\\temp\\AlinaMalinaA.github.io\\index.html")

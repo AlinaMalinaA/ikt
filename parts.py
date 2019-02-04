@@ -3,7 +3,7 @@
 
 
 def get_rating_file():
-    return 'C:\\Users\\Alena\\Documents\\test_project\\new_try\\index.html'
+    return 'F:\\Users\\Alena\\Documents\\New_folder\\ikt\\index.html'
 
 
 def get_first_part():
@@ -12,12 +12,12 @@ def get_first_part():
         first += row
         if '<script type="text/javascript">' in row:
             break
-    first += "var array = ["
+
     return first
 
 
 def get_second_part():
-    second = "];"
+    second = "\n"
     start_write = False
     for row in rows:
         if 'var isSelected = false' in row:
@@ -28,6 +28,6 @@ def get_second_part():
 
 
 file = get_rating_file()
-with open(file) as f:
+with open(file, encoding="utf-8") as f:
     rows = f.readlines()
 
