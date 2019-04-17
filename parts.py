@@ -3,7 +3,7 @@
 
 
 def get_rating_file():
-    return 'F:\\Users\\Alena\\Documents\\New_folder\\ikt\\index.html'
+    return 'index.html'
 
 
 def get_first_part():

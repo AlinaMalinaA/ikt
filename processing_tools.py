@@ -9,7 +9,7 @@ import re
 
 
 def get_names_file():
-    return 'F:\\Users\\Alena\\Documents\\New_folder\\ikt\\names.html'
+    return 'names.html'
 
 
 def get_url_to_parse():
